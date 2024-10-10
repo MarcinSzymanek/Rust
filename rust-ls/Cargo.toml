@@ -1,0 +1,9 @@
+[package]
+name = "rust-ls"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5.19", features = ["derive"] }
+colored = "2.1.0"
+log = "0.4.22"
