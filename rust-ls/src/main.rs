@@ -21,6 +21,15 @@ struct Args {
     dir: String,
 }
 
+const WHITESPACES: &str = "                                                                                                                                                     ";
+const WHITESPACES_PER_FIELD: usize = 40;
+
+// Copy the amount of whitespaces needed and append them to the string
+fn fill_whitespaces(string: &mut String){
+    let space_count = WHITESPACES_PER_FIELD - string.len();
+    let spaces = WHITESPACES[..space_count].to_string().clone();
+    string.push_str(&spaces);
+}
 
 fn main() {
     let args = Args::parse();
@@ -76,13 +85,7 @@ fn main() {
     }
 
     let mut output: String = "filename".to_string().to_owned();
-    let mut spaces = 40 - output.chars().count();
-    let mut whitespaces = "".to_owned();
-    while spaces > 0{
-        whitespaces.push_str(" ");
-        spaces-=1;
-    }
-    output.push_str(&whitespaces);
+    fill_whitespaces(& mut output);
     output.push_str("type\n");
     println!("{}", output);
 
@@ -94,24 +97,19 @@ fn main() {
         let color =  if is_dir {colored::Color::Green} else {colored::Color::White};
 
         let filename = value.file_name().into_string().unwrap();
-        let mut spaces = 40 - filename.chars().count();
-        let mut whitespaces = "".to_owned();
-        while spaces > 0{
-            whitespaces.push_str(" ");
-            spaces-=1;
-        }
-
         let mut output: String = filename;
-        output.push_str(&whitespaces);
+        fill_whitespaces(&mut output);
+        let mut filetype: String = String::new();
         if is_dir{
-            output.push_str("dir\n");
+            filetype.push_str("dir");
         } else if is_link{
-            output.push_str("link\n");
+            filetype.push_str("link");
         } else{
-            output.push_str("file\n");
+            filetype.push_str("file");
         }
+        fill_whitespaces(&mut filetype);
 
-        print!("{}", output.color(color));
+        print!("{}{}\n", output.color(color), filetype.color(color));
     }
 
 }
