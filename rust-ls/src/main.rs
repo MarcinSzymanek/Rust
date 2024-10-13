@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::fs::ReadDir;
 use std::{env, fs};
 use std::env::consts::OS;
@@ -31,6 +32,66 @@ fn fill_whitespaces(string: &mut String){
     string.push_str(&spaces);
 }
 
+fn output_standard(contents: &mut ReadDir){
+    for val in contents{
+        let value = val.as_ref().unwrap();
+        let is_dir: bool = value.file_type().unwrap().is_dir();
+        let is_link: bool = value.file_type().unwrap().is_symlink();
+
+        let color =  if is_dir {colored::Color::Green} else {colored::Color::White};
+
+        let mut filename = value.file_name().into_string().unwrap();
+        let mut filetype: String = String::new();
+        if is_dir{
+            filetype.push_str("dir");
+        } else if is_link{
+            filetype.push_str("link");
+        } else{
+            filetype.push_str("file");
+        }
+        fill_whitespaces(&mut filename);
+        fill_whitespaces(&mut filetype);
+
+        print!("{}{}\n", filename.color(color), filetype.color(color));
+    }
+}
+
+fn output_dir_first(contents: &mut ReadDir){
+    let mut dirs: VecDeque<String> = VecDeque::new();
+    let mut other: VecDeque<String> = VecDeque::new();
+
+    for val in contents{
+        let value = val.as_ref().unwrap();
+        let is_dir: bool = value.file_type().unwrap().is_dir();
+        let filename = value.file_name().into_string().unwrap();
+        if is_dir{
+            dirs.push_back(filename);
+        }
+        else{
+            other.push_back(filename);
+        }
+    }
+
+    let color = colored::Color::Green;
+    // Output dirs first
+    for _ in 0..dirs.len(){
+        let mut dirname = dirs.pop_front().unwrap();
+        let mut filetype = String::from("dir");
+        fill_whitespaces(&mut dirname);
+        fill_whitespaces(&mut filetype);
+        print!("{}{}\n", dirname.color(color), filetype.color(color));
+    }
+
+    // Output other files
+    for _ in 0..other.len(){
+        let mut filename = other.pop_front().unwrap();
+        let mut filetype = String::from("file");
+        fill_whitespaces(&mut filename);
+        fill_whitespaces(&mut filetype);
+        print!("{}{}\n", filename, filetype);
+    }
+}
+
 fn main() {
     let args = Args::parse();
     let os_args: Vec<_> = env::args().collect();
@@ -52,9 +113,9 @@ fn main() {
             trace!(target: "os args", "Received arg: {}", val);
         }
     }
-    warn!("Going to dir: {}", args.dir);
+    warn!("Checking dir: {}", args.dir);
 
-    let dir_contents: ReadDir;
+    let mut dir_contents: ReadDir;
     match fs::read_dir(args.dir.as_str()){
         Ok(contents) => dir_contents = contents,
         Err(error) => {
@@ -89,26 +150,10 @@ fn main() {
     output.push_str("type\n");
     println!("{}", output);
 
-    for val in dir_contents{
-        let value = val.as_ref().unwrap();
-        let is_dir: bool = value.file_type().unwrap().is_dir();
-        let is_link: bool = value.file_type().unwrap().is_symlink();
-
-        let color =  if is_dir {colored::Color::Green} else {colored::Color::White};
-
-        let mut filename = value.file_name().into_string().unwrap();
-        let mut filetype: String = String::new();
-        if is_dir{
-            filetype.push_str("dir");
-        } else if is_link{
-            filetype.push_str("link");
-        } else{
-            filetype.push_str("file");
-        }
-        fill_whitespaces(&mut filename);
-        fill_whitespaces(&mut filetype);
-
-        print!("{}{}\n", filename.color(color), filetype.color(color));
+    if args.sort_by_dir{
+        output_dir_first(&mut dir_contents);
+        return;
     }
+    output_standard(&mut dir_contents);
 
 }
