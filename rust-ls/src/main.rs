@@ -96,9 +96,7 @@ fn main() {
 
         let color =  if is_dir {colored::Color::Green} else {colored::Color::White};
 
-        let filename = value.file_name().into_string().unwrap();
-        let mut output: String = filename;
-        fill_whitespaces(&mut output);
+        let mut filename = value.file_name().into_string().unwrap();
         let mut filetype: String = String::new();
         if is_dir{
             filetype.push_str("dir");
@@ -107,9 +105,10 @@ fn main() {
         } else{
             filetype.push_str("file");
         }
+        fill_whitespaces(&mut filename);
         fill_whitespaces(&mut filetype);
 
-        print!("{}{}\n", output.color(color), filetype.color(color));
+        print!("{}{}\n", filename.color(color), filetype.color(color));
     }
 
 }
